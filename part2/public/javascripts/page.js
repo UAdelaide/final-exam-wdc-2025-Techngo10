@@ -207,6 +207,7 @@ function login(){
 
     // Open connection to server & send the post data using a POST request
     // We will cover POST requests in more detail in week 8
+    // Changed to use the correct endpoint for login old("/users/login")
     xmlhttp.open("POST", "/api/users/login", true);
     xmlhttp.setRequestHeader("Content-type", "application/json");
     xmlhttp.send(JSON.stringify(user));
@@ -218,8 +219,16 @@ function logout(){
     // Create AJAX Request
     var xmlhttp = new XMLHttpRequest();
 
+    xmlhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            // Redirect to login page after successful logout
+            window.location.href = '/';
+        }
+    };
+
     // Open connection to server & send the post data using a POST request
-    xmlhttp.open("POST", "/users/logout", true);
+    // Changed to use the correct endpoint for logout old("/users/logout")
+    xmlhttp.open("POST", "/api/users/logout", true);
     xmlhttp.send();
 
 }

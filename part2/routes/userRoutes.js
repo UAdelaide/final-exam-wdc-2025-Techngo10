@@ -35,7 +35,7 @@ router.get('/me', (req, res) => {
   res.json(req.session.user);
 });
 
-// POST login (dummy version)
+// POST login (edited version)
 // Changed data names as it was email and password in the original code
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -53,12 +53,29 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Store user info in session
+    req.session.user = {
+      id: rows[0].user_id,
+      username: rows[0].username,
+      role: rows[0].role
+    };
+
     // More debugging output
     res.json({ message: 'Login successful', user: rows[0] });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
+});
+
+// POST /users/logout - destroy session and log out
+router.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    // Clear the session cookie
+    res.clearCookie('connect.sid');
+    res.json({ message: 'Logged out' });
+  });
 });
 
 module.exports = router;
