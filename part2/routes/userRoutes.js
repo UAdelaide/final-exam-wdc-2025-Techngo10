@@ -36,21 +36,27 @@ router.get('/me', (req, res) => {
 });
 
 // POST login (dummy version)
+// Changed data names as it was email and password in the original code
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
+  console.log('Login attempt:', username, password);
 
   try {
     const [rows] = await db.query(`
       SELECT user_id, username, role FROM Users
-      WHERE email = ? AND password_hash = ?
-    `, [email, password]);
+      WHERE username = ? AND password_hash = ?
+    `, [username, password]);
+      // Debugging output
+    console.log('Query result:', rows);
 
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // More debugging output
     res.json({ message: 'Login successful', user: rows[0] });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
