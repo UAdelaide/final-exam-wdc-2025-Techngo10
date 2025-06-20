@@ -48,6 +48,22 @@
         const error = ref('');
         const user = 3;
 
+        // Function to get the current user
+        async function getCurrentUser() {
+          // Fetch the current user from the API
+          try {
+            const res = await fetch('/api/users/me');
+            if (!res.ok) {
+              throw new Error('Failed to fetch user');
+            }
+            const user = await res.json();
+            return user;
+          } catch (err) {
+            console.error('Error getting current user:', err);
+            return null;
+          }
+        }
+
         async function loadWalkRequests() {
           try {
             const res = await fetch('/api/walks');
@@ -58,22 +74,36 @@
           }
         }
 
-        async function applyToWalk(requestId) {
+        // Function to apply to a walk
+        async function applyToWalk(walkId) {
+          // Check if the user is logged in and is a walker
+          const user = await getCurrentUser();
+          if (!user || user.role !== 'walker') {
+            alert('You must be logged in as a walker to apply.');
+            return;
+          }
+
+          // Proceed with applying to the walk
           try {
-            const res = await fetch(`/api/walks/${requestId}/apply`, {
+            const res = await fetch(`/api/walks/${walkId}/apply`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ walker_id: user })
+              body: JSON.stringify({ walk_id: walkId, walker_id: user.id })  // Use user.id
             });
-            const result = await res.json();
 
-            if (!res.ok) throw new Error(result.error || 'Application failed');
-            message.value = result.message;
-            error.value = '';
-            await loadWalkRequests();
+            const result = await res.json();  // Parse the response
+
+            // Check if the response is ok
+            if (!res.ok) {
+              throw new Error(result.error || 'Failed to apply');
+            }
+
+            alert('Successfully applied!');
+            loadWalkRequests();  // Reload the available walk list
+
           } catch (err) {
-            error.value = err.message;
-            message.value = '';
+            console.error('Apply error:', err);
+            alert('Could not apply to walk.');
           }
         }
 

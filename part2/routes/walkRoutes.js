@@ -37,26 +37,50 @@ router.post('/', async (req, res) => {
 
 // POST an application to walk a dog (from walker)
 router.post('/:id/apply', async (req, res) => {
-  const requestId = req.params.id;
-  const { walker_id } = req.body;
+  const requestId = req.params.id; // get the request ID from the URL params
+  const { walker_id } = req.body; // get walker_id from request body
 
   try {
+    // Properly pass the variables into the query to prevent SQL injection
     await db.query(`
       INSERT INTO WalkApplications (request_id, walker_id)
       VALUES (?, ?)
     `, [requestId, walker_id]);
 
+    // Update the walk request status to 'accepted'
     await db.query(`
       UPDATE WalkRequests
       SET status = 'accepted'
       WHERE request_id = ?
     `, [requestId]);
 
+    // Respond with success or fail message
     res.status(201).json({ message: 'Application submitted' });
   } catch (error) {
     console.error('SQL Error:', error);
     res.status(500).json({ error: 'Failed to apply for walk' });
   }
 });
+
+// Get all dogs for the logged-in owner
+router.get('/mydogs', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'owner') {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // Fetch dogs owned by the logged-in user
+    const [dogs] = await db.query(`
+      SELECT dog_id, name FROM Dogs WHERE owner_id = ?
+    `, [req.session.user.id]);
+
+    res.json(dogs);
+  } catch (error) {
+    // Log the error for debugging
+    console.error('Error fetching dogs:', error);
+    res.status(500).json({ error: 'Failed to fetch dogs' });
+  }
+});
+
 
 module.exports = router;

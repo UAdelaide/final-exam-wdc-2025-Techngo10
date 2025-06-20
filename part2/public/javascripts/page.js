@@ -232,3 +232,36 @@ function logout(){
     xmlhttp.send();
 
 }
+
+// This function fetches the list of dogs owned by the logged-in user
+function loadOwnerDogs() {
+  fetch('/api/walks/mydogs')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to load dogs');
+      }
+      return response.json();
+    })
+    .then(dogs => {
+      const dogSelect = document.getElementById('dogID');
+
+      // Clear existing options (except the placeholder)
+      dogSelect.innerHTML = '<option disabled selected>-- Choose a dog --</option>';
+
+      // Add options from the fetched list
+      dogs.forEach(dog => {
+        const option = document.createElement('option');
+        option.value = dog.dog_id;
+        option.textContent = dog.name;
+        dogSelect.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching dogs:', error);
+    });
+}
+
+// Run this on page load
+window.addEventListener('DOMContentLoaded', () => {
+  loadOwnerDogs();
+});
